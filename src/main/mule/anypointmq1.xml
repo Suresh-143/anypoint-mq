@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	<anypoint-mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config" doc:id="eb49e28e-a43f-4936-95c3-a008cfd392a4" >
+		<anypoint-mq:connection clientId="0e6b8a90f39044eb913dac242f3876be" clientSecret="c6dc876db6a64006b8fd7AC0A0AaA364"/>
+	</anypoint-mq:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a621d598-7153-4b7e-989b-6e9deca339bf" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7faa04fb-1b73-4f13-93d1-d58a0ad9f93b" >
+		<http:request-connection host="mq-data.us-e2.cloudhub.io" />
+	</http:request-config>
+	<anypoint-mq:circuit-breaker name="Circuit_breaker" tripTimeout="40" doc:name="Circuit breaker" doc:id="ff4facd8-2a00-4298-9180-6a0ce31f2009" onErrorTypes="HTTP:CONNECTIVIT" errorsThreshold="1" tripTimeoutUnit="SECONDS" />
+	<configuration doc:name="Configuration" doc:id="fd5ff1f3-e484-4e20-8603-ffa4327c3ac2" defaultErrorHandler-ref="global-errorhandler" />
+	
+	<flow name="anypointmq1Flow" doc:id="545e5b36-b814-4a51-aedf-29e18b7f47d5" >
+		<http:listener doc:name="Listener" doc:id="900902b0-950a-4e18-b8eb-bd8bc861da99" config-ref="HTTP_Listener_config" path="/mqueue"/>
+		<logger level="INFO" doc:name="Logger" doc:id="9bfb1244-9652-4f91-a5e5-b4ac29702990" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="b3b2052c-4917-42a2-bc81-6f34faf38978" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<anypoint-mq:publish doc:id="1de1fc38-02ff-4b71-bec4-f424ec365643" config-ref="Anypoint_MQ_Config" destination="rof-demand-forecast"/>
+		<logger level="INFO" doc:name="Logger" doc:id="506aa4de-dfe6-4652-9e3c-9d4fc52fc446" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="92ba09b7-19d6-4a9e-b834-49b646159984" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler ref="global-errorhandler" />
+	</flow>
+	<flow name="anypointmq1Flow1" doc:id="2ac4171e-3625-4d67-b112-5962bcabbcb6" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="48603f19-e230-4bb7-93b1-42e93cdf332a" config-ref="Anypoint_MQ_Config" destination="rof-demand-forecast" acknowledgementMode="MANUAL" circuitBreaker="Circuit_breaker"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3096a4c7-4b2d-49cb-a5b8-7e790eef561f" message="#[payload]"/>
+		<set-variable value="#[attributes.ackToken]" doc:name="Set Variable" doc:id="8cfeab31-0814-48c7-8e94-fec134f0d363" variableName="ackToken"/>
+		<ee:transform doc:name="Transform Message" doc:id="6a07f0ce-27c4-4d8a-b2fe-5e75873c653c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="90660dea-abc5-4060-bf90-767300fbf951" />
+			<http:request method="POST" doc:name="Request" doc:id="ab14c714-6416-4810-a1df-5e4cc99af971" config-ref="HTTP_Request_configuration" path="/data">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	client_secret : "235e56202620416697023696bCA735f3",
+	client_id : "628edfc9b0f146e2975c3b269d2d639f"
+}]]]></http:headers>
+			</http:request>
+	
+		<anypoint-mq:ack doc:name="Ack" doc:id="c68bd1a0-8f8a-4ac5-9f3b-99a15cc97480" config-ref="Anypoint_MQ_Config" ackToken="#[vars.ackToken]" />
+		<logger level="INFO" doc:name="Logger" doc:id="2ace5974-78b9-4d65-9f42-c1366f9478a7" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="8c48a9cf-2ccb-4948-b99b-d6a84dbfba8b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="b8fbdaa6-2f2a-4d32-9bf8-32cc1ee8a205" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+read(payload,"application/java")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

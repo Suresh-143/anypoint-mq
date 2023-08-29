@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<error-handler name="global-errorhandler"
+		doc:id="071efcae-285d-441b-ba3d-60f16d797680">
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="98e34f04-2062-4d85-917e-bef195087a42"
+			type="ANYPOINT-MQ:ACKING, ANYPOINT-MQ:CONNECTIVITY, ANYPOINT-MQ:DESTINATION_NOT_FOUND, ANYPOINT-MQ:RETRY_EXHAUSTED, STREAM_MAXIMUM_SIZE_EXCEEDED">
+			<logger level="INFO" doc:name="Logger"
+				doc:id="43cc96fa-8086-4fc9-979d-3ce26cfb7431" />
+			<ee:transform doc:name="Transform Message"
+				doc:id="23749fd2-c26f-40c1-8b67-dbfe4965e884">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error.description,
+	"error-Type": error.errorType,
+	"error.messege":error.errorMessage,
+	"errorComponnt": error.failingComponent
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-continue enableNotifications="true"
+			logException="true" doc:name="On Error Continue"
+			doc:id="846a79bc-0329-49f7-a0f5-0cb5088044d4" type="HTTP:CONNECTIVITY,HTTP:TIMEOUT">
+			<logger level="INFO" doc:name="Logger"
+				doc:id="9be78016-8541-4e01-8cd5-06c44e557da2" />
+			<ee:transform doc:name="Transform Message"
+				doc:id="e267c5fc-ef65-45f1-8b0e-0f5fa85c70d0">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message":"excute flow successfully "
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="12cb426f-b879-43a7-b1e4-b0dc2b30201a" message="#[payload]"/>
+		</on-error-continue>
+	</error-handler>
+</mule>
+	
+	
+	
+

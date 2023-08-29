@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="anypointmq1-suite.xml" />
+	<munit:test name="anypointmq1Flow-test" doc:id="eea8748c-2e39-4e37-ae7a-156eacdd2ef3" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Publish" doc:id="adb30fb6-2a9f-4aa7-a750-4fe5ccc52db4" processor="anypoint-mq:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="1de1fc38-02ff-4b71-bec4-f424ec365643" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://anypointmq1Flowtest\mock_payload.dwl')]" encoding="UTF-8" />
+					<munit-tools:attributes value="#[readUrl('classpath://anypointmq1Flowtest\mock_attributes.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:spy doc:name="Spy Transform Message" doc:id="85fcfb17-41d4-4e5a-bca9-e008968bf08f" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="92ba09b7-19d6-4a9e-b834-49b646159984" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="8b2a969e-8788-423d-b019-985b414d372d" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import anypointmq1Flowtest::spy_assert_payload
+---
+spy_assert_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="51076f74-deb0-4297-b3e7-3aa983988274" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import anypointmq1Flowtest::spy_assert_payload1
+---
+spy_assert_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:spy doc:name="Spy Transform Message" doc:id="829c44c7-317e-4b24-ac9a-03c81c65f3ef" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="b3b2052c-4917-42a2-bc81-6f34faf38978" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="7bb50ccd-8f99-45f4-9e14-c0aa211fd397" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import anypointmq1Flowtest::spy_assert_payload2
+---
+spy_assert_payload2::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="c721b9ad-19a0-45b9-9351-bf6fb6bfec3f" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import anypointmq1Flowtest::spy_assert_payload3
+---
+spy_assert_payload3::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="6d040690-0b85-4544-848b-44a1ca55cb42" >
+				<munit:payload value="#[output application/json  --- readUrl('classpath://anypointmq1Flowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json " />
+				<munit:attributes value="#[readUrl('classpath://anypointmq1Flowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to anypointmq1Flow" doc:id="4e417435-2e74-431e-9805-ddf9cf70dcfa" name="anypointmq1Flow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="bc814ae3-9929-47cf-a6b1-0683ca405c9e" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import anypointmq1Flowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Transform Message" doc:id="53847be2-6d24-4a61-b741-45067123c098" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="92ba09b7-19d6-4a9e-b834-49b646159984" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify Transform Message" doc:id="26145131-1f5a-456e-ae3f-0c15e9c25456" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="b3b2052c-4917-42a2-bc81-6f34faf38978" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
